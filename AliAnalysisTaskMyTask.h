@@ -23,6 +23,17 @@ class AliAnalysisTaskMyTask : public AliAnalysisTaskSE
         TList*                  fOutputList;    //! output list
         TH1F*                   fHistPt;        //! dummy histogram
 
+        Int_t charge;
+        Int_t minusCharge;
+        Int_t plusCharge;
+        Int_t NetCharge;
+        Int_t iMult;
+
+        TH1I*                   fHistNegativeCharge; //! edited by me
+        TH1I*                   fHistPositiveCharge; //! edited by me
+        TH1I*                   fHistNetCharge;      //! edited by me
+        TH1I*                   fMultiplicity;       //! edited by me
+
         AliAnalysisTaskMyTask(const AliAnalysisTaskMyTask&); // not implemented
         AliAnalysisTaskMyTask& operator=(const AliAnalysisTaskMyTask&); // not implemented
 

@@ -21,7 +21,7 @@ void runAnalysis()
 #endif
      
     // create the analysis manager
-    AliAnalysisManager *mgr = new AliAnalysisManager("AnalysisTaskExample");
+    AliAnalysisManager *mgr = new AliAnalysisManager("AliAnalysisTaskMyTask"); //AnalysisTaskExample
     AliAODInputHandler *aodH = new AliAODInputHandler();
     mgr->SetInputEventHandler(aodH);
 

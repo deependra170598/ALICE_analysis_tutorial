@@ -21,6 +21,7 @@
 
 #include "TChain.h"
 #include "TH1F.h"
+#include "TH1I.h"
 #include "TList.h"
 #include "AliAnalysisTask.h"
 #include "AliAnalysisManager.h"
@@ -35,14 +36,20 @@ using namespace std;            // std namespace: so you can do things like 'cou
 ClassImp(AliAnalysisTaskMyTask) // classimp: necessary for root
 
 AliAnalysisTaskMyTask::AliAnalysisTaskMyTask() : AliAnalysisTaskSE(), 
-    fAOD(0), fOutputList(0), fHistPt(0)
+    fAOD(0), fOutputList(0), 
+    //Histogramming
+    fHistPt(0), fHistNegativeCharge(0),fHistPositiveCharge(0),fHistNetCharge(0),fMultiplicity(0),
+    // Analysis Variable
+    charge(0),minusCharge(0),plusCharge(0),NetCharge(0),iMult(0)
 {
     // default constructor, don't allocate memory here!
     // this is used by root for IO purposes, it needs to remain empty
 }
 //_____________________________________________________________________________
 AliAnalysisTaskMyTask::AliAnalysisTaskMyTask(const char* name) : AliAnalysisTaskSE(name),
-    fAOD(0), fOutputList(0), fHistPt(0)
+    fAOD(0), fOutputList(0), 
+    fHistPt(0),fHistNegativeCharge(0),fHistPositiveCharge(0),fHistNetCharge(0),fMultiplicity(0),
+    charge(0),minusCharge(0),plusCharge(0),NetCharge(0),iMult(0)
 {
     // constructor
     DefineInput(0, TChain::Class());    // define the input of the analysis: in this case we take a 'chain' of events
@@ -77,12 +84,25 @@ void AliAnalysisTaskMyTask::UserCreateOutputObjects()
                                         // to the output file
     fOutputList->SetOwner(kTRUE);       // memory stuff: the list is owner of all objects it contains and will delete them
                                         // if requested (dont worry about this now)
-
+                                                      
     // example of a histogram
     fHistPt = new TH1F("fHistPt", "fHistPt", 100, 0, 10);       // create your histogra
+    
+    //edited by me
+    fHistNegativeCharge=new TH1I("fHistNegativeCharge","fHistNegativeCharge",100,0,100); 
+    fHistPositiveCharge=new TH1I("fHistPositiveCharge","fHistPositiveCharge",100,0,100); 
+    fHistNetCharge=new TH1I("fHistNetCharge","fHistNetCharge",100,-100,100);                
+    fMultiplicity=new TH1I("fMultiplicity","fMultiplicity",100,-1,400);                   
+
     fOutputList->Add(fHistPt);          // don't forget to add it to the list! the list will be written to file, so if you want
                                         // your histogram in the output file, add it to the list!
-    
+
+    //Edited by me
+    fOutputList->Add(fHistNegativeCharge);  
+    fOutputList->Add(fHistPositiveCharge);   
+    fOutputList->Add(fHistNetCharge);       
+    fOutputList->Add(fMultiplicity);        
+
     PostData(1, fOutputList);           // postdata will notify the analysis manager of changes / updates to the 
                                         // fOutputList object. the manager will in the end take care of writing your output to file
                                         // so it needs to know what's in the output
@@ -95,6 +115,9 @@ void AliAnalysisTaskMyTask::UserExec(Option_t *)
     // the manager will take care of reading the events from file, and with the static function InputEvent() you 
     // have access to the current event. 
     // once you return from the UserExec function, the manager will retrieve the next event from the chain
+    minusCharge=0;
+    plusCharge=0;
+
     fAOD = dynamic_cast<AliAODEvent*>(InputEvent());    // get an event (called fAOD) from the input file
                                                         // there's another event format (ESD) which works in a similar wya
                                                         // but is more cpu/memory unfriendly. for now, we'll stick with aod's
@@ -106,7 +129,25 @@ void AliAnalysisTaskMyTask::UserExec(Option_t *)
         AliAODTrack* track = static_cast<AliAODTrack*>(fAOD->GetTrack(i));         // get a track (type AliAODTrack) from the event
         if(!track || !track->TestFilterBit(1)) continue;                            // if we failed, skip this track
         fHistPt->Fill(track->Pt());                     // plot the pt value of the track in a histogram
+        
+        charge=track->Charge();
+        if(charge<0)
+            minusCharge++;
+        else if(charge>0)
+            plusCharge++;
+                    
     }                                                   // continue until all the tracks are processed
+
+    iMult=plusCharge-minusCharge;
+    NetCharge=plusCharge+minusCharge;
+
+    fHistNegativeCharge->Fill(minusCharge);
+    fHistPositiveCharge->Fill(plusCharge);
+    fHistNetCharge->Fill(NetCharge);
+    fMultiplicity->Fill(iMult);
+
+
+
     PostData(1, fOutputList);                           // stream the results the analysis of this event to
                                                         // the output manager which will take care of writing
                                                         // it to a file
